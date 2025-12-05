@@ -3,6 +3,11 @@ import sys
 commands = {
     "exit": lambda code=0, *_: sys.exit(int(code)),
     "echo": lambda *args: print(" ".join(args)),
+    "type": lambda command: print(
+         f"{command} is a shell builtin" if command in commands else
+        f"{command}: not found"
+    ),
+
 }
 def main():
     while(True):
