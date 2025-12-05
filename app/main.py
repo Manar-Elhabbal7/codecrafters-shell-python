@@ -1,29 +1,55 @@
 import sys
+import os
 
-commands = {
-    "exit": lambda code=0, *_: sys.exit(int(code)),
-    "echo": lambda *args: print(" ".join(args)),
-    "type": lambda command: print(
-         f"{command} is a shell builtin" if command in commands else
-        f"{command}: not found"
-    ),
 
+def cmd_exit(code="0", *_):
+    sys.exit(int(code))
+
+def cmd_echo(*args):
+    print(" ".join(args))
+
+def cmd_type(command):
+    if command in builtins:
+        print(f"{command} is a shell builtin")
+    else:
+        path = find_executable(command)
+        if path:
+            print(f"{command} is {path}")
+        else:
+            print(f"{command}: not found")
+
+builtins = {
+    "exit": cmd_exit,
+    "echo": cmd_echo,
+    "type": cmd_type
 }
+
+def find_executable(command):
+    for dir in os.environ.get("PATH", "").split(os.pathsep):
+        full_path = os.path.join(dir, command)
+        if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
+            return full_path
+    return None
+
 def main():
-    while(True):
+    while True:
         sys.stdout.write("$ ")
         sys.stdout.flush()
-
         user_input = input().split()
+        if not user_input:
+            continue
 
-        command =user_input[0]
-        args =user_input[1:]
+        command = user_input[0]
+        args = user_input[1:]
 
-        if command in commands:
-            commands[command](*args)
+        if command in builtins:
+            builtins[command](*args)
         else:
-            print(f"{command}: command not found")
-
+            path = find_executable(command)
+            if path:
+                print(f"{command} is {path}")
+            else:
+                print(f"{command}: not found")
 
 if __name__ == "__main__":
     main()
