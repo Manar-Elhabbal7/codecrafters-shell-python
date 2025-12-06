@@ -18,10 +18,14 @@ def cmd_type(command):
         else:
             print(f"{command}: not found")
 
+def cmd_pwd(*_):
+    print(os.getcwd())
+    
 builtins = {
     "exit": cmd_exit,
     "echo": cmd_echo,
-    "type": cmd_type
+    "type": cmd_type,
+    "pwd": cmd_pwd
 }
 
 path  = os.getenv("PATH", "")
@@ -47,7 +51,7 @@ def main():
         
         
         if command in builtins:
-         builtins[command](*args)
+            builtins[command](*args)
         else:
             path = find_executable(command)
             
