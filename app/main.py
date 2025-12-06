@@ -2,11 +2,14 @@ import sys
 import os
 import subprocess
 
+
 def cmd_exit(code="0", *_):
     sys.exit(int(code))
 
+
 def cmd_echo(*args):
     print(" ".join(args))
+
 
 def cmd_type(command):
     if command in builtins:
@@ -18,16 +21,19 @@ def cmd_type(command):
         else:
             print(f"{command}: not found")
 
+
 def cmd_pwd(*_):
     print(os.getcwd())
 
+
 def cmd_cd(directory):
+    new_path = os.path.normpath(os.path.join(os.getcwd(), directory))
     try:
-        os.chdir(directory)
+        os.chdir(new_path)
     except FileNotFoundError:
         print(f"cd: {directory}: No such file or directory")
 
-    
+
 builtins = {
     "exit": cmd_exit,
     "echo": cmd_echo,
@@ -36,8 +42,9 @@ builtins = {
     "cd": cmd_cd,
 }
 
-path  = os.getenv("PATH", "")
+path = os.getenv("PATH", "")
 paths = path.split(os.pathsep)
+
 
 def find_executable(command):
     for path in paths:
@@ -45,6 +52,7 @@ def find_executable(command):
         if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
             return full_path
     return None
+
 
 def main():
     while True:
@@ -56,17 +64,17 @@ def main():
 
         command = user_input[0]
         args = user_input[1:]
-        
-        
+
         if command in builtins:
             builtins[command](*args)
         else:
             path = find_executable(command)
-            
+
             if path:
                 subprocess.run([command] + args, executable=path)
             else:
                 print(f"{command}: command not found")
+
 
 if __name__ == "__main__":
     main()
