@@ -20,12 +20,16 @@ def cmd_type(command):
 
 def cmd_pwd(*_):
     print(os.getcwd())
+
+def cmd_cd(directory):
+    os.chdir(directory)
     
 builtins = {
     "exit": cmd_exit,
     "echo": cmd_echo,
     "type": cmd_type,
-    "pwd": cmd_pwd
+    "pwd": cmd_pwd,
+    "cd": cmd_cd,
 }
 
 path  = os.getenv("PATH", "")
