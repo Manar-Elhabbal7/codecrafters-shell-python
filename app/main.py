@@ -22,7 +22,11 @@ def cmd_pwd(*_):
     print(os.getcwd())
 
 def cmd_cd(directory):
-    os.chdir(directory)
+    try:
+        os.chdir(directory)
+    except FileNotFoundError:
+        print(f"cd: {directory}: No such file or directory")
+
     
 builtins = {
     "exit": cmd_exit,
