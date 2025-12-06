@@ -53,7 +53,7 @@ def main():
             if path:
                 print(f"{command} is {path}")
             elif find_executable(command.split(" ")[0]):
-                subprocess.run([command] + args)
+                os.system(command)
             else:
                 print(f"{command}: not found")
 
