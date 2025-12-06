@@ -28,6 +28,8 @@ def cmd_pwd(*_):
 
 def cmd_cd(directory):
     new_path = os.path.normpath(os.path.join(os.getcwd(), directory))
+    if directory == "~":
+        new_path = os.path.expanduser("~")
     try:
         os.chdir(new_path)
     except FileNotFoundError:
