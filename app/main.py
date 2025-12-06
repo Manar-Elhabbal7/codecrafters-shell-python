@@ -47,16 +47,14 @@ def main():
         
         
         if command in builtins:
-            builtins[command](*args)
+         builtins[command](*args)
         else:
             path = find_executable(command)
-            program_name = os.path.basename(path)
-            program_dir  = os.path.dirname(path)
             
             if path:
-                subprocess.run([program_name] + args,cwd=program_dir)
+                subprocess.run([path] + args)
             else:
-                print(f"{command}: not found")
+                print(f"{command}: command not found")
 
 if __name__ == "__main__":
     main()
