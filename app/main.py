@@ -50,8 +50,11 @@ def main():
             builtins[command](*args)
         else:
             path = find_executable(command)
+            program_name = os.path.basename(path)
+            program_dir  = os.path.dirname(path)
+            
             if path:
-                subprocess.run([path] + args)
+                subprocess.run([program_name] + args,cwd=program_dir)
             else:
                 print(f"{command}: not found")
 
