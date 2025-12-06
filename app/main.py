@@ -1,6 +1,6 @@
 import sys
 import os
-
+import subprocess
 
 def cmd_exit(code="0", *_):
     sys.exit(int(code))
@@ -24,9 +24,12 @@ builtins = {
     "type": cmd_type
 }
 
+path  = os.getenv("PATH", "")
+paths = path.split(os.pathsep)
+
 def find_executable(command):
-    for dir in os.environ.get("PATH", "").split(os.pathsep):
-        full_path = os.path.join(dir, command)
+    for path in paths:
+        full_path = os.path.join(path, command)
         if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
             return full_path
     return None
@@ -41,13 +44,16 @@ def main():
 
         command = user_input[0]
         args = user_input[1:]
-
+        
+        
         if command in builtins:
             builtins[command](*args)
         else:
             path = find_executable(command)
             if path:
                 print(f"{command} is {path}")
+            elif find_executable(command.split(" ")[0]):
+                subprocess.run([command] + args)
             else:
                 print(f"{command}: not found")
 
