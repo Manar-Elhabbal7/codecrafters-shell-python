@@ -3,6 +3,10 @@ import subprocess
 import shlex
 import os
 
+
+def cmd_exit(*_):   
+    sys.exit(0)
+
 def cmd_echo(*args):
     output = []
     idx = 0
@@ -71,6 +75,7 @@ def cmd_cd(directory):
 
 
 builtins = {
+    "exit":cmd_exit,
     "echo": cmd_echo,
     "type": cmd_type,
     "pwd": cmd_pwd,
@@ -103,8 +108,6 @@ def main():
         command = parts[0]
         args = parts[1:]
         
-        if command == "exit":
-            break
         
         if command in builtins:
             builtins[command](*args)
