@@ -1,76 +1,31 @@
 import sys
-import os
 import subprocess
-
-
-def cmd_exit(code="0", *_):
-    sys.exit(int(code))
-
-
-def cmd_echo(*args):
-    print(" ".join(args))
-
-
-def cmd_type(command):
-    if command in builtins:
-        print(f"{command} is a shell builtin")
-    else:
-        path = find_executable(command)
-        if path:
-            print(f"{command} is {path}")
-        else:
-            print(f"{command}: not found")
-
-
-def cmd_pwd(*_):
-    print(os.getcwd())
-
-
-def cmd_cd(directory):
-    new_path = os.path.normpath(os.path.join(os.getcwd(), directory))
-    if directory == "~":
-        new_path = os.path.expanduser("~")
-    try:
-        os.chdir(new_path)
-    except FileNotFoundError:
-        print(f"cd: {directory}: No such file or directory")
-
-
-builtins = {
-    "exit": cmd_exit,
-    "echo": cmd_echo,
-    "type": cmd_type,
-    "pwd": cmd_pwd,
-    "cd": cmd_cd,
-}
-
-path = os.getenv("PATH", "")
-paths = path.split(os.pathsep)
-
-
-def find_executable(command):
-    for path in paths:
-        full_path = os.path.join(path, command)
-        if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
-            return full_path
-    return None
+import shlex
+import cmds_impl as cmd_impl
 
 
 def main():
     while True:
         sys.stdout.write("$ ")
         sys.stdout.flush()
-        user_input = input().split()
-        if not user_input:
+        
+        user_input = input()
+        
+        if not user_input.strip():
             continue
-
-        command = user_input[0]
-        args = user_input[1:]
-
-        if command in builtins:
-            builtins[command](*args)
+        
+        parts = shlex.split(user_input)
+        
+        command = parts[0]
+        args = parts[1:]
+        
+        if command == "exit":
+            break
+        
+        if command in cmd_impl.builtins:
+            cmd_impl.builtins[command](*args)
         else:
-            path = find_executable(command)
+            path = cmd_impl.find_executable(command)
 
             if path:
                 subprocess.run([command] + args, executable=path)
