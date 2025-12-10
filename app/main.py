@@ -10,6 +10,7 @@ def cmd_echo(*args):
     output = []
     redirect_file = None
     redirect_type = None
+    
     i = 0
     while i < len(args):
         word = args[i]
@@ -50,9 +51,14 @@ def cmd_echo(*args):
             output_dir = os.path.dirname(redirect_file)
             if output_dir and not os.path.exists(output_dir):
                 os.makedirs(output_dir)
-            with open(redirect_file, 'a'):
-                pass
+            if redirect_type == "2>":
+                with open(redirect_file, 'w'):
+                    pass
+            else:
+                with open(redirect_file, 'a'):
+                 pass
             print(result, file=sys.stderr)
+
     else:
         print(result)
 
@@ -104,6 +110,8 @@ def handle_redirection(args):
                 output_file = args[redirect_index + 1]
                 cleaned_args = args[:redirect_index]
                 return cleaned_args, output_file, redirect_op
+    
+    
     for redirect_op in (">", "1>", "2>"):
         if redirect_op in args:
             redirect_index = args.index(redirect_op)
