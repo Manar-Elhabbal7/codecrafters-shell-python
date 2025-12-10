@@ -1,3 +1,4 @@
+import readline
 import sys
 import subprocess
 import shlex
@@ -11,6 +12,7 @@ def cmd_echo(*args):
     redirect_file = None
     redirect_type = None
     i = 0
+    
     while i < len(args):
         word = args[i]
         if word in (">", "1>", "2>", ">>", "1>>", "2>>"):
@@ -31,6 +33,7 @@ def cmd_echo(*args):
             output.append(word)
         i += 1
     result = " ".join(output)
+    
     if redirect_file:
         output_dir = os.path.dirname(redirect_file)
         if output_dir and not os.path.exists(output_dir):
@@ -74,6 +77,14 @@ def cmd_cd(directory):
     except FileNotFoundError:
         print(f"cd: {directory}: No such file or directory")
 
+
+def auto_complete (text, state):
+    options = [cmd for cmd in builtins.keys() if cmd.startswith(text)]
+    if state < len(options):
+        return options[state]
+    else:
+        return None
+
 builtins = {
     "exit": cmd_exit,
     "echo": cmd_echo,
@@ -100,6 +111,7 @@ def handle_redirection(args):
                 output_file = args[redirect_index + 1]
                 cleaned_args = args[:redirect_index]
                 return cleaned_args, output_file, redirect_op
+            
     for redirect_op in (">", "1>", "2>"):
         if redirect_op in args:
             redirect_index = args.index(redirect_op)
@@ -107,13 +119,20 @@ def handle_redirection(args):
                 output_file = args[redirect_index + 1]
                 cleaned_args = args[:redirect_index]
                 return cleaned_args, output_file, redirect_op
+            
     return args, None, None
 
 def main():
-    while True:
+    
+    readline.set_completer(auto_complete)
+    readline.parse_and_bind("tab: complete")
+    running = True
+    
+    while running:
         sys.stdout.write("$ ")
         sys.stdout.flush()
         user_input = input()
+        
         if not user_input.strip():
             continue
         parts = shlex.split(user_input)
