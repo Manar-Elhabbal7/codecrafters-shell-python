@@ -17,7 +17,7 @@ def cmd_echo(*args):
     while i < len(args):
         word = args[i]
         
-        if word in (">", "1>","2>"):
+        if word in (">", "1>", "2>"):
             if i + 1 < len(args):
                 redirect_file = args[i + 1]
                 redirect_type = word
@@ -39,7 +39,7 @@ def cmd_echo(*args):
     
     result = " ".join(output)
     
-    if redirect_file and redirect_type in (">", "1>"):
+    if redirect_file:
         output_dir = os.path.dirname(redirect_file)
         if output_dir and not os.path.exists(output_dir):
             try:
@@ -47,11 +47,16 @@ def cmd_echo(*args):
             except OSError:
                 pass
         
-        with open(redirect_file, 'w') as f:
-            f.write(result + "\n")
+        if redirect_type in (">", "1>"):
+            with open(redirect_file, 'w') as f:
+                f.write(result + "\n")
+        else:
+            with open(redirect_file, 'w') as f:
+                pass 
+            print(result)
     else:
         print(result)
-
+        
 
 def cmd_type(command):
     if command in builtins:
