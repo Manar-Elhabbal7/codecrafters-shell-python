@@ -40,21 +40,20 @@ def cmd_echo(*args):
     result = " ".join(output)
     
     if redirect_file:
+        if redirect_type in (">", "1>"):
+            mode = 'w'
+        elif redirect_type in (">>", "1>>"):
+            mode = 'a'
+        else:
+            print(result)
+            return
+        
         output_dir = os.path.dirname(redirect_file)
         if output_dir and not os.path.exists(output_dir):
             try:
                 os.makedirs(output_dir)
             except OSError:
                 pass
-        
-        # 'w' for write, 'a' for append
-        if redirect_type in (">", "1>"):
-            mode = 'w'
-        elif redirect_type in (">>", "1>>"):
-            mode = 'a'
-        else: 
-            print(result)
-            return
         
         with open(redirect_file, mode) as f:
             f.write(result + "\n")
@@ -161,9 +160,9 @@ def main():
                     
                     try:
                         if redirect_op in (">>", "1>>", "2>>"):
-                            mode = 'a' 
+                            mode = 'a'
                         else:
-                            mode = 'w'  
+                            mode = 'w'
                         
                         with open(output_file, mode) as f:
                             if redirect_op in ("2>", "2>>"):
