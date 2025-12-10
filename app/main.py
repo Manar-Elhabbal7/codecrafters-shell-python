@@ -17,6 +17,7 @@ def cmd_echo(*args):
     while i < len(args):
         word = args[i]
         
+        # detect redirection
         if word in (">", "1>", "2>", ">>", "1>>", "2>>"):
             if i + 1 < len(args):
                 redirect_file = args[i + 1]
@@ -25,12 +26,14 @@ def cmd_echo(*args):
             i += 1
             continue
         
+        # quoted literal '
         if word == "'":
             if output:
                 output[-1] += "'"
             else:
                 output.append("'")
         
+        # words like 'hello'
         elif word.startswith("'") and len(word) > 1 and word.endswith("'"):
             output.append(word[1:-1])
         
@@ -42,11 +45,13 @@ def cmd_echo(*args):
     result = " ".join(output)
     
     if redirect_file:
+        # detect mode
         if redirect_type in (">", "1>", "2>"):
             mode = 'w'
         elif redirect_type in (">>", "1>>", "2>>"):
             mode = 'a'
         
+        # ensure directory exists
         output_dir = os.path.dirname(redirect_file)
         if output_dir and not os.path.exists(output_dir):
             try:
@@ -55,11 +60,19 @@ def cmd_echo(*args):
                 print(f"echo: {redirect_file}: {e.strerror}")
                 return
         
+        # write file
         try:
             with open(redirect_file, mode) as f:
                 f.write(result + "\n")
         except Exception as e:
             print(f"echo: {redirect_file}: {e}")
+            return
+        
+        # print to correct stream
+        if redirect_type in ("2>", "2>>"):
+            print(result, file=sys.stderr)
+        else:
+            print(result)
     
     else:
         print(result)
