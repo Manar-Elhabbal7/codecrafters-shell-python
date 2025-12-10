@@ -10,27 +10,45 @@ def cmd_exit(*_):
 
 def cmd_echo(*args):
     output = []
+    redirect_file = None
+    i = 0
     
-    for word in args:
+    while i < len(args):
+        word = args[i]
+        
+        if word in (">", "1>"):
+            if i + 1 < len(args):
+                redirect_file = args[i + 1]
+                break
+            i += 1
+            continue
+        
         if word == "'":
             if output:
                 output[-1] += "'"
             else:
                 output.append("'")
-        
-        elif word == ">":
-            if len(args) > args.index(word) + 1:
-                filename = args[args.index(word) + 1]
-                with open(filename, 'w') as f:
-                    f.write(" ".join(output) + "\n")
-                return
-       
         elif word.startswith("'") and len(word) > 1 and word.endswith("'"):
             output.append(word[1:-1])
         else:
             output.append(word)
-
-    print(" ".join(output))
+        
+        i += 1
+    
+    result = " ".join(output)
+    
+    if redirect_file:
+        output_dir = os.path.dirname(redirect_file)
+        if output_dir and not os.path.exists(output_dir):
+            try:
+                os.makedirs(output_dir)
+            except OSError:
+                pass
+        
+        with open(redirect_file, 'w') as f:
+            f.write(result + "\n")
+    else:
+        print(result)
 
 
 def cmd_type(command):
@@ -79,12 +97,13 @@ def find_executable(command):
 
 
 def handle_redirection(args):
-    if ">" in args:
-        redirect_index = args.index(">")
-        if redirect_index + 1 < len(args):
-            output_file = args[redirect_index + 1]
-            cleaned_args = args[:redirect_index]
-            return cleaned_args, output_file
+    for redirect_op in (">", "1>"):
+        if redirect_op in args:
+            redirect_index = args.index(redirect_op)
+            if redirect_index + 1 < len(args):
+                output_file = args[redirect_index + 1]
+                cleaned_args = args[:redirect_index]
+                return cleaned_args, output_file
     return args, None
 
 
