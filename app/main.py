@@ -47,6 +47,11 @@ def cmd_echo(*args):
             with open(redirect_file, mode) as f:
                 f.write(result + "\n")
         elif redirect_type in ("2>", "2>>"):
+            output_dir = os.path.dirname(redirect_file)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            with open(redirect_file, 'a'):
+                pass
             print(result, file=sys.stderr)
     else:
         print(result)
