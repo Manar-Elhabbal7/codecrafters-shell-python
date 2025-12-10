@@ -32,24 +32,21 @@ def cmd_echo(*args):
         i += 1
     result = " ".join(output)
     if redirect_file:
-        if redirect_type in (">", "1>", "2>"):
+        if redirect_type in (">", "1>"):
             mode = 'w'
-        elif redirect_type in (">>", "1>>", "2>>"):
-            mode = 'a'
-        output_dir = os.path.dirname(redirect_file)
-        if output_dir and not os.path.exists(output_dir):
-            try:
+            output_dir = os.path.dirname(redirect_file)
+            if output_dir and not os.path.exists(output_dir):
                 os.makedirs(output_dir)
-            except OSError as e:
-                print(f"echo: {redirect_file}: {e.strerror}")
-                return
-        try:
             with open(redirect_file, mode) as f:
                 f.write(result + "\n")
-        except Exception as e:
-            print(f"echo: {redirect_file}: {e}")
-            return
-        if redirect_type in ("2>", "2>>"):
+        elif redirect_type in (">>", "1>>"):
+            mode = 'a'
+            output_dir = os.path.dirname(redirect_file)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            with open(redirect_file, mode) as f:
+                f.write(result + "\n")
+        elif redirect_type in ("2>", "2>>"):
             print(result, file=sys.stderr)
     else:
         print(result)
@@ -136,7 +133,7 @@ def main():
                             print(f"{command}: {output_file}: {e.strerror}")
                             continue
                     try:
-                        if redirect_op in (">>", "1>>", "2>>"):
+                        if redirect_op in (">>", "1>>"):
                             mode = 'a'
                         else:
                             mode = 'w'
