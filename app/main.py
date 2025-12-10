@@ -7,8 +7,11 @@ import os
 def cmd_exit(*_):   
     sys.exit(0)
 
+
 def cmd_echo(*args):
     output = []
+    #hadle write in file
+    
     
     for word in args:
         if word == "'":
@@ -16,6 +19,16 @@ def cmd_echo(*args):
                 output[-1] += "'"
             else:
                 output.append("'")
+        
+        elif word == ">":
+            if len(args) > args.index(word) + 1:
+                filename = args[args.index(word) + 1]
+                with open(filename, 'w') as f:
+                    f.write(" ".join(output) + "\n")
+                
+                open(filename, 'a').close()
+                return
+       
         
         elif word.startswith("'") and len(word) > 1 and word.endswith("'"):
             output.append(word[1:-1])
