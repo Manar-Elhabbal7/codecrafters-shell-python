@@ -52,11 +52,15 @@ def cmd_echo(*args):
         if output_dir and not os.path.exists(output_dir):
             try:
                 os.makedirs(output_dir)
-            except OSError:
-                pass
+            except OSError as e:
+                print(f"echo: {redirect_file}: {e.strerror}")
+                return
         
-        with open(redirect_file, mode) as f:
-            f.write(result + "\n")
+        try:
+            with open(redirect_file, mode) as f:
+                f.write(result + "\n")
+        except Exception as e:
+            print(f"echo: {redirect_file}: {e}")
     else:
         print(result)
         
