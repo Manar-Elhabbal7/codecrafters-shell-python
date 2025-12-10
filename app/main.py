@@ -17,7 +17,7 @@ def cmd_echo(*args):
     while i < len(args):
         word = args[i]
         
-        if word in (">", "1>", "2>"):
+        if word in (">", "1>", "2>", ">>", "1>>", "2>>"):
             if i + 1 < len(args):
                 redirect_file = args[i + 1]
                 redirect_type = word
@@ -47,13 +47,17 @@ def cmd_echo(*args):
             except OSError:
                 pass
         
+        # 'w' for write, 'a' for append
         if redirect_type in (">", "1>"):
-            with open(redirect_file, 'w') as f:
-                f.write(result + "\n")
-        else:
-            with open(redirect_file, 'w') as f:
-                pass 
+            mode = 'w'
+        elif redirect_type in (">>", "1>>"):
+            mode = 'a'
+        else: 
             print(result)
+            return
+        
+        with open(redirect_file, mode) as f:
+            f.write(result + "\n")
     else:
         print(result)
         
@@ -104,6 +108,14 @@ def find_executable(command):
 
 
 def handle_redirection(args):
+    for redirect_op in (">>", "1>>", "2>>"):
+        if redirect_op in args:
+            redirect_index = args.index(redirect_op)
+            if redirect_index + 1 < len(args):
+                output_file = args[redirect_index + 1]
+                cleaned_args = args[:redirect_index]
+                return cleaned_args, output_file, redirect_op
+    
     for redirect_op in (">", "1>", "2>"):
         if redirect_op in args:
             redirect_index = args.index(redirect_op)
@@ -111,6 +123,7 @@ def handle_redirection(args):
                 output_file = args[redirect_index + 1]
                 cleaned_args = args[:redirect_index]
                 return cleaned_args, output_file, redirect_op
+    
     return args, None, None
 
 
@@ -147,8 +160,13 @@ def main():
                             continue
                     
                     try:
-                        with open(output_file, 'w') as f:
-                            if redirect_op == "2>":
+                        if redirect_op in (">>", "1>>", "2>>"):
+                            mode = 'a' 
+                        else:
+                            mode = 'w'  
+                        
+                        with open(output_file, mode) as f:
+                            if redirect_op in ("2>", "2>>"):
                                 subprocess.run([command] + cleaned_args, executable=path, stderr=f)
                             else:
                                 subprocess.run([command] + cleaned_args, executable=path, stdout=f)
