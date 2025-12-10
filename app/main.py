@@ -10,7 +10,6 @@ def cmd_echo(*args):
     output = []
     redirect_file = None
     redirect_type = None
-    
     i = 0
     while i < len(args):
         word = args[i]
@@ -33,32 +32,23 @@ def cmd_echo(*args):
         i += 1
     result = " ".join(output)
     if redirect_file:
+        output_dir = os.path.dirname(redirect_file)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         if redirect_type in (">", "1>"):
-            mode = 'w'
-            output_dir = os.path.dirname(redirect_file)
-            if output_dir and not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-            with open(redirect_file, mode) as f:
+            with open(redirect_file, 'w') as f:
                 f.write(result + "\n")
         elif redirect_type in (">>", "1>>"):
-            mode = 'a'
-            output_dir = os.path.dirname(redirect_file)
-            if output_dir and not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-            with open(redirect_file, mode) as f:
+            with open(redirect_file, 'a') as f:
                 f.write(result + "\n")
-        elif redirect_type in ("2>", "2>>"):
-            output_dir = os.path.dirname(redirect_file)
-            if output_dir and not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-            if redirect_type == "2>":
-                with open(redirect_file, 'w'):
-                    pass
-            else:
-                with open(redirect_file, 'a'):
-                 pass
+        elif redirect_type == "2>":
+            with open(redirect_file, 'w'):
+                pass
             print(result, file=sys.stderr)
-
+        elif redirect_type == "2>>":
+            with open(redirect_file, 'a'):
+                pass
+            print(result, file=sys.stderr)
     else:
         print(result)
 
@@ -110,8 +100,6 @@ def handle_redirection(args):
                 output_file = args[redirect_index + 1]
                 cleaned_args = args[:redirect_index]
                 return cleaned_args, output_file, redirect_op
-    
-    
     for redirect_op in (">", "1>", "2>"):
         if redirect_op in args:
             redirect_index = args.index(redirect_op)
@@ -146,15 +134,18 @@ def main():
                             print(f"{command}: {output_file}: {e.strerror}")
                             continue
                     try:
-                        if redirect_op in (">>", "1>>"):
-                            mode = 'a'
-                        else:
-                            mode = 'w'
-                        with open(output_file, mode) as f:
-                            if redirect_op in ("2>", "2>>"):
-                                subprocess.run([command] + cleaned_args, executable=path, stderr=f)
-                            else:
+                        if redirect_op in (">", "1>"):
+                            with open(output_file, 'w') as f:
+                                subprocess.run([command] + cleaned_args, executable=path, stdout=f, stderr=f if redirect_op=="2>" else None)
+                        elif redirect_op in (">>", "1>>"):
+                            with open(output_file, 'a') as f:
                                 subprocess.run([command] + cleaned_args, executable=path, stdout=f)
+                        elif redirect_op == "2>":
+                            with open(output_file, 'w') as f:
+                                subprocess.run([command] + cleaned_args, executable=path, stderr=f)
+                        elif redirect_op == "2>>":
+                            with open(output_file, 'a') as f:
+                                subprocess.run([command] + cleaned_args, executable=path, stderr=f)
                     except FileNotFoundError:
                         print(f"{command}: {output_file}: No such file or directory")
                 else:
