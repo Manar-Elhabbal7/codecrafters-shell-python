@@ -12,7 +12,6 @@ def cmd_echo(*args):
     output = []
     #hadle write in file
     
-    
     for word in args:
         if word == "'":
             if output:
@@ -25,15 +24,12 @@ def cmd_echo(*args):
                 filename = args[args.index(word) + 1]
                 with open(filename, 'w') as f:
                     f.write(" ".join(output) + "\n")
-                
                 open(filename, 'a').close()
                 return
        
-        
         elif word.startswith("'") and len(word) > 1 and word.endswith("'"):
             output.append(word[1:-1])
         else:
-            # unquoted words
             output.append(word)
 
     print(" ".join(output))
