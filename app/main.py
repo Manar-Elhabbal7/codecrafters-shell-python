@@ -39,7 +39,7 @@ def cmd_echo(*args):
     
     result = " ".join(output)
     
-    if redirect_file:
+    if redirect_file and redirect_type in (">", "1>"):
         output_dir = os.path.dirname(redirect_file)
         if output_dir and not os.path.exists(output_dir):
             try:
