@@ -30,8 +30,10 @@ def cmd_echo(*args):
                 output[-1] += "'"
             else:
                 output.append("'")
+        
         elif word.startswith("'") and len(word) > 1 and word.endswith("'"):
             output.append(word[1:-1])
+        
         else:
             output.append(word)
         
@@ -40,13 +42,10 @@ def cmd_echo(*args):
     result = " ".join(output)
     
     if redirect_file:
-        if redirect_type in (">", "1>"):
+        if redirect_type in (">", "1>", "2>"):
             mode = 'w'
-        elif redirect_type in (">>", "1>>"):
+        elif redirect_type in (">>", "1>>", "2>>"):
             mode = 'a'
-        else:
-            print(result)
-            return
         
         output_dir = os.path.dirname(redirect_file)
         if output_dir and not os.path.exists(output_dir):
@@ -61,9 +60,10 @@ def cmd_echo(*args):
                 f.write(result + "\n")
         except Exception as e:
             print(f"echo: {redirect_file}: {e}")
+    
     else:
         print(result)
-        
+
 
 def cmd_type(command):
     if command in builtins:
