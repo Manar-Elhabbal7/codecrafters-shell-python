@@ -11,14 +11,16 @@ def cmd_exit(*_):
 def cmd_echo(*args):
     output = []
     redirect_file = None
+    redirect_type = None
     i = 0
     
     while i < len(args):
         word = args[i]
         
-        if word in (">", "1>"):
+        if word in (">", "1>","2>"):
             if i + 1 < len(args):
                 redirect_file = args[i + 1]
+                redirect_type = word
                 break
             i += 1
             continue
@@ -97,14 +99,14 @@ def find_executable(command):
 
 
 def handle_redirection(args):
-    for redirect_op in (">", "1>"):
+    for redirect_op in (">", "1>", "2>"):
         if redirect_op in args:
             redirect_index = args.index(redirect_op)
             if redirect_index + 1 < len(args):
                 output_file = args[redirect_index + 1]
                 cleaned_args = args[:redirect_index]
-                return cleaned_args, output_file
-    return args, None
+                return cleaned_args, output_file, redirect_op
+    return args, None, None
 
 
 def main():
@@ -128,7 +130,7 @@ def main():
             path = find_executable(command)
 
             if path:
-                cleaned_args, output_file = handle_redirection(args)
+                cleaned_args, output_file, redirect_op = handle_redirection(args)
                 
                 if output_file:
                     output_dir = os.path.dirname(output_file)
@@ -141,7 +143,10 @@ def main():
                     
                     try:
                         with open(output_file, 'w') as f:
-                            subprocess.run([command] + cleaned_args, executable=path, stdout=f)
+                            if redirect_op == "2>":
+                                subprocess.run([command] + cleaned_args, executable=path, stderr=f)
+                            else:
+                                subprocess.run([command] + cleaned_args, executable=path, stdout=f)
                     except FileNotFoundError:
                         print(f"{command}: {output_file}: No such file or directory")
                 else:
