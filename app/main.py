@@ -81,7 +81,7 @@ def cmd_cd(directory):
 def auto_complete (text, state):
     options = [cmd for cmd in builtins.keys() if cmd.startswith(text)]
     if state < len(options):
-        return options[state]
+        return options[state]+ " "
     else:
         return None
 
