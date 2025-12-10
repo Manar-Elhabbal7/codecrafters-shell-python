@@ -9,45 +9,21 @@ def cmd_exit(*_):
 
 def cmd_echo(*args):
     output = []
-    idx = 0
-
-    while idx < len(args):
-        word = args[idx]
-        
-        if word.startswith("'"):
-            
-            w = word[1:] 
-
-            
-            if w.endswith("'"):
-                w = w[:-1]
-                if w:       #handle if empty quotes    
-                    output.append(w)
-
+    
+    for word in args:
+        if word == "'":
+            if output:
+                output[-1] += "'"
             else:
-                
-                parts = [w]
-                idx += 1
-
-                while idx < len(args) and not args[idx].endswith("'"):
-                    parts.append(args[idx])
-                    idx += 1
-
-                if idx < len(args):  
-                    parts.append(args[idx][:-1])
-
-                final = " ".join(parts)
-                if final:        
-                    output.append(final)
-
+                output.append("'")
+        
+        elif word.startswith("'") and len(word) > 1 and word.endswith("'"):
+            output.append(word[1:-1])
         else:
             # unquoted words
             output.append(word)
 
-        idx += 1
-
     print(" ".join(output))
-
 
 def cmd_type(command):
     if command in builtins:
