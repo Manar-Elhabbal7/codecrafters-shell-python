@@ -110,7 +110,7 @@ def auto_complete(text, state):
             sys.stdout.flush()
             
         if state < len(auto_complete_states["options"]):
-            return auto_complete_states["options"][state]
+            return auto_complete_states["options"][state] + " "
         else:
             return None
     elif auto_complete_states["tab_count"] >= 2:
