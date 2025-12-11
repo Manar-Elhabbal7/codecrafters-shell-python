@@ -77,27 +77,51 @@ def cmd_cd(directory):
     except FileNotFoundError:
         print(f"cd: {directory}: No such file or directory")
 
+auto_complete_states = {
+    "tab_count": 0,
+    "last_text": "",
+    "options": []
+}
 
-def auto_complete (text, state):
-    builtin_options = [cmd for cmd in builtins.keys() if cmd.startswith(text)]
+def auto_complete(text, state):
+    if text != auto_complete_states["last_text"]:
+        auto_complete_states["tab_count"] = 0
+        auto_complete_states["last_text"] = text
+        
+        builtin_options = [cmd for cmd in builtins.keys() if cmd.startswith(text)]
+        path_options = []
+        
+        for p in paths:
+            try:
+                for entry in os.listdir(p):
+                    if entry.startswith(text) and os.access(os.path.join(p, entry), os.X_OK):
+                        path_options.append(entry)
+            except (FileNotFoundError, PermissionError):
+                continue
+        
+        auto_complete_states["options"] = sorted(set(builtin_options + path_options))
     
-    executable_options = []
-    for path in paths:
-        try:
-            for cmd in os.listdir(path):
-                if cmd.startswith(text):
-                    executable_options.append(cmd)
-        except (FileNotFoundError, PermissionError):
-            continue
+    if state == 0:
+        auto_complete_states["tab_count"] += 1
     
-    options = list(set(builtin_options + executable_options))
-    options.sort()
-    
-    if state < len(options):
-        return options[state] + " "
+    if auto_complete_states["tab_count"] == 1:
+        if state == 0 and auto_complete_states["options"]:
+            sys.stdout.write('\x07')
+            sys.stdout.flush()
+            
+        if state < len(auto_complete_states["options"]):
+            return auto_complete_states["options"][state]
+        else:
+            return None
+    elif auto_complete_states["tab_count"] >= 2:
+        if state == 0 and auto_complete_states["options"]:
+            print()
+            print("  ".join(auto_complete_states["options"]))
+            sys.stdout.write("$ " + readline.get_line_buffer())
+            sys.stdout.flush()
+        return None
     else:
         return None
-
 
 builtins = {
     "exit": cmd_exit,
