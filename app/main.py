@@ -79,11 +79,25 @@ def cmd_cd(directory):
 
 
 def auto_complete (text, state):
-    options = [cmd for cmd in builtins.keys() if cmd.startswith(text)]
+    builtin_options = [cmd for cmd in builtins.keys() if cmd.startswith(text)]
+    
+    executable_options = []
+    for path in paths:
+        try:
+            for cmd in os.listdir(path):
+                if cmd.startswith(text):
+                    executable_options.append(cmd)
+        except (FileNotFoundError, PermissionError):
+            continue
+    
+    options = list(set(builtin_options + executable_options))
+    options.sort()
+    
     if state < len(options):
-        return options[state]+ " "
+        return options[state] + " "
     else:
         return None
+
 
 builtins = {
     "exit": cmd_exit,
@@ -126,6 +140,9 @@ def main():
     
     readline.set_completer(auto_complete)
     readline.parse_and_bind("tab: complete")
+    
+    
+    
     running = True
     
     while running:
