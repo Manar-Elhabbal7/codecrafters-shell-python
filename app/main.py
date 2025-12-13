@@ -139,7 +139,7 @@ def run_builtin_with_pipeline(cmd, input_pipe=None):
         if input_pipe:
             sys.stdin = input_pipe
 
-        sys.stdout = os.fdeopen(w, "w")
+        sys.stdout = os.fdopen(w, "w")
         builtins[cmd[0]](*cmd[1:])
 
     finally:
@@ -150,14 +150,13 @@ def run_builtin_with_pipeline(cmd, input_pipe=None):
 
 
 def execute_pipeline(user_input):
-    # logic here
     cmds = [shlex.split(cmd.strip()) for cmd in user_input.split("|")]
     processes = []
     prev = None
 
     for i, cmd in enumerate(cmds):
-
         command = cmd[0]
+
         if command in builtins:
             prev = run_builtin_with_pipeline(cmd, prev)
 
@@ -180,12 +179,11 @@ def execute_pipeline(user_input):
             prev = p.stdout
             processes.append(p)
 
-        for p in processes:
-            p.wait()
-            
-        if prev:
-            sys.stdout.write(prev.read())
+    for p in processes:
+        p.wait()
 
+    if prev:
+        sys.stdout.write(prev.read())
 
 builtins = {
     "exit": cmd_exit,
