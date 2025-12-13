@@ -140,7 +140,10 @@ def run_builtin_with_pipeline(cmd, input_pipe=None):
             sys.stdin = input_pipe
 
         sys.stdout = os.fdopen(w, "w")
-        builtins[cmd[0]](*cmd[1:])
+        result = builtins[cmd[0]](*cmd[1:])
+        if result:
+            sys.stdout.write(result)
+
 
     finally:
         sys.stdout.close()
