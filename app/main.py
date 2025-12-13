@@ -3,16 +3,19 @@ import sys
 import subprocess
 import shlex
 import os
+import signal
 
-def cmd_exit(*_):   
+
+def cmd_exit(*_):
     sys.exit(0)
+
 
 def cmd_echo(*args):
     output = []
     redirect_file = None
     redirect_type = None
     i = 0
-    
+
     while i < len(args):
         word = args[i]
         if word in (">", "1>", "2>", ">>", "1>>", "2>>"):
@@ -33,27 +36,28 @@ def cmd_echo(*args):
             output.append(word)
         i += 1
     result = " ".join(output)
-    
+
     if redirect_file:
         output_dir = os.path.dirname(redirect_file)
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
         if redirect_type in (">", "1>"):
-            with open(redirect_file, 'w') as f:
+            with open(redirect_file, "w") as f:
                 f.write(result + "\n")
         elif redirect_type in (">>", "1>>"):
-            with open(redirect_file, 'a') as f:
+            with open(redirect_file, "a") as f:
                 f.write(result + "\n")
         elif redirect_type == "2>":
-            with open(redirect_file, 'w'):
+            with open(redirect_file, "w"):
                 pass
             print(result, file=sys.stderr)
         elif redirect_type == "2>>":
-            with open(redirect_file, 'a'):
+            with open(redirect_file, "a"):
                 pass
             print(result, file=sys.stderr)
     else:
         print(result)
+
 
 def cmd_type(command):
     if command in builtins:
@@ -65,8 +69,10 @@ def cmd_type(command):
         else:
             print(f"{command}: not found")
 
+
 def cmd_pwd(*_):
     print(os.getcwd())
+
 
 def cmd_cd(directory):
     new_path = os.path.normpath(os.path.join(os.getcwd(), directory))
@@ -77,38 +83,38 @@ def cmd_cd(directory):
     except FileNotFoundError:
         print(f"cd: {directory}: No such file or directory")
 
-auto_complete_states = {
-    "tab_count": 0,
-    "last_text": "",
-    "options": []
-}
+
+auto_complete_states = {"tab_count": 0, "last_text": "", "options": []}
+
 
 def auto_complete(text, state):
     if text != auto_complete_states["last_text"]:
         auto_complete_states["tab_count"] = 0
         auto_complete_states["last_text"] = text
-        
+
         builtin_options = [cmd for cmd in builtins.keys() if cmd.startswith(text)]
         path_options = []
-        
+
         for p in paths:
             try:
                 for entry in os.listdir(p):
-                    if entry.startswith(text) and os.access(os.path.join(p, entry), os.X_OK):
+                    if entry.startswith(text) and os.access(
+                        os.path.join(p, entry), os.X_OK
+                    ):
                         path_options.append(entry)
             except (FileNotFoundError, PermissionError):
                 continue
-        
+
         auto_complete_states["options"] = sorted(set(builtin_options + path_options))
-    
+
     if state == 0:
         auto_complete_states["tab_count"] += 1
-    
+
     if auto_complete_states["tab_count"] == 1:
         if state == 0 and auto_complete_states["options"]:
-            sys.stdout.write('\x07')
+            sys.stdout.write("\x07")
             sys.stdout.flush()
-            
+
         if state < len(auto_complete_states["options"]):
             return auto_complete_states["options"][state] + " "
         else:
@@ -123,6 +129,43 @@ def auto_complete(text, state):
     else:
         return None
 
+
+def is_a_pipe(command: str) -> bool:
+    return "|" in command
+
+def subprocess_call(command: str)->bool:
+    subprocess.call(command,shell=True)
+    return False
+
+def execute_pipeline(user_input):
+    #logic here
+    cmds =[shlex.split(cmd.strip()) for cmd in user_input.split("|")]
+    processes =[]
+    prev = None
+    
+    
+    for i,cmd in enumerate(cmds):
+        path = find_executable(cmd[0])
+        if not path:
+            print(f"{cmd[0]}: command not found")
+            return
+        
+        p =subprocess.Popen(
+            cmd,
+            executable=path,
+            stdin = prev,
+            stdout =subprocess.PIPE if i< len(cmds)-1 else None,
+        )
+        
+        if prev :
+            prev.close()
+            
+        prev =p.stdout
+        processes.append(p)
+        
+    for p in processes:
+        p.wait()
+    
 builtins = {
     "exit": cmd_exit,
     "echo": cmd_echo,
@@ -134,12 +177,14 @@ builtins = {
 path = os.getenv("PATH", "")
 paths = path.split(os.pathsep)
 
+
 def find_executable(command):
     for path in paths:
         full_path = os.path.join(path, command)
         if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
             return full_path
     return None
+
 
 def handle_redirection(args):
     for redirect_op in (">>", "1>>", "2>>"):
@@ -149,7 +194,7 @@ def handle_redirection(args):
                 output_file = args[redirect_index + 1]
                 cleaned_args = args[:redirect_index]
                 return cleaned_args, output_file, redirect_op
-            
+
     for redirect_op in (">", "1>", "2>"):
         if redirect_op in args:
             redirect_index = args.index(redirect_op)
@@ -157,29 +202,35 @@ def handle_redirection(args):
                 output_file = args[redirect_index + 1]
                 cleaned_args = args[:redirect_index]
                 return cleaned_args, output_file, redirect_op
-            
+
     return args, None, None
 
 
- 
 def main():
-    
+
     readline.set_completer(auto_complete)
     readline.parse_and_bind("tab: complete")
-    
-    
+
     running = True
-    
+
     while running:
         sys.stdout.write("$ ")
         sys.stdout.flush()
         user_input = input()
-        
+
         if not user_input.strip():
             continue
+        
+        if "|" in user_input:
+            execute_pipeline(user_input)
+            continue
+
         parts = shlex.split(user_input)
         command = parts[0]
         args = parts[1:]
+
+        
+        
         if command in builtins:
             builtins[command](*args)
         else:
@@ -196,23 +247,35 @@ def main():
                             continue
                     try:
                         if redirect_op in (">", "1>"):
-                            with open(output_file, 'w') as f:
-                                subprocess.run([command] + cleaned_args, executable=path, stdout=f, stderr=f if redirect_op=="2>" else None)
+                            with open(output_file, "w") as f:
+                                subprocess.run(
+                                    [command] + cleaned_args,
+                                    executable=path,
+                                    stdout=f,
+                                    stderr=f if redirect_op == "2>" else None,
+                                )
                         elif redirect_op in (">>", "1>>"):
-                            with open(output_file, 'a') as f:
-                                subprocess.run([command] + cleaned_args, executable=path, stdout=f)
+                            with open(output_file, "a") as f:
+                                subprocess.run(
+                                    [command] + cleaned_args, executable=path, stdout=f
+                                )
                         elif redirect_op == "2>":
-                            with open(output_file, 'w') as f:
-                                subprocess.run([command] + cleaned_args, executable=path, stderr=f)
+                            with open(output_file, "w") as f:
+                                subprocess.run(
+                                    [command] + cleaned_args, executable=path, stderr=f
+                                )
                         elif redirect_op == "2>>":
-                            with open(output_file, 'a') as f:
-                                subprocess.run([command] + cleaned_args, executable=path, stderr=f)
+                            with open(output_file, "a") as f:
+                                subprocess.run(
+                                    [command] + cleaned_args, executable=path, stderr=f
+                                )
                     except FileNotFoundError:
                         print(f"{command}: {output_file}: No such file or directory")
                 else:
                     subprocess.run([command] + cleaned_args, executable=path)
             else:
                 print(f"{command}: command not found")
+
 
 if __name__ == "__main__":
     main()
