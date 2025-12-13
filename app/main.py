@@ -11,6 +11,8 @@ ex : exit blabla bla
 just the program exit
 
 """
+
+
 def cmd_exit(*_):
     sys.exit(0)
 
@@ -68,6 +70,8 @@ def cmd_echo(*args):
 builtin or external program or not found
 
 """
+
+
 def cmd_type(command):
     if command in builtins:
         print(f"{command} is a shell builtin")
@@ -84,6 +88,8 @@ getcwd to get current working directory
 os is a library to excute with the operating system
 
 """
+
+
 def cmd_pwd(*_):
     print(os.getcwd())
 
@@ -96,6 +102,8 @@ chdir to change dir to the new path
 i handled if the file not found
 
 """
+
+
 def cmd_cd(directory):
     new_path = os.path.normpath(os.path.join(os.getcwd(), directory))
 
@@ -108,11 +116,7 @@ def cmd_cd(directory):
         print(f"cd: {directory}: No such file or directory")
 
 
-auto_complete_states = {
-    "tab_count": 0,
-    "last_text": "", 
-    "options": []
-}
+auto_complete_states = {"tab_count": 0, "last_text": "", "options": []}
 
 
 def auto_complete(text, state):
@@ -216,14 +220,24 @@ def execute_pipeline(user_input):
     if prev:
         sys.stdout.write(prev.read())
 
+
 history_list = []
+
 
 def addTohistory(command):
     history_list.append(command)
-    
-def cmd_history(*_):
-    for i,cmd in enumerate(history_list,start=1):
+
+
+def cmd_history(*args):
+    if args and args[0].isdigit():
+        limit = int(args[0])
+
+    else:
+        limit = len(history_list)
+
+    for i, cmd in enumerate(history_list[-limit:], start=len(history_list) - limit + 1):
         print(f"{i} {cmd}")
+
 
 builtins = {
     "exit": cmd_exit,
@@ -243,6 +257,8 @@ paths = path.split(os.pathsep)
 """
 command is the name we search about 
 """
+
+
 def find_executable(command):
     for path in paths:
         full_path = os.path.join(path, command)
@@ -272,7 +288,6 @@ def handle_redirection(args):
     return args, None, None
 
 
-
 def main():
 
     readline.set_completer(auto_complete)
@@ -287,7 +302,7 @@ def main():
 
         if not user_input.strip():
             continue
-        
+
         addTohistory(user_input)
 
         if "|" in user_input:
