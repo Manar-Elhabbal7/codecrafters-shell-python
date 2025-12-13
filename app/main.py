@@ -3,7 +3,6 @@ import sys
 import subprocess
 import shlex
 import os
-import signal
 
 
 def cmd_exit(*_):
@@ -56,7 +55,7 @@ def cmd_echo(*args):
                 pass
             print(result, file=sys.stderr)
     else:
-        print(result)
+        return result + "\n"
 
 
 def cmd_type(command):
@@ -130,42 +129,64 @@ def auto_complete(text, state):
         return None
 
 
-def is_a_pipe(command: str) -> bool:
-    return "|" in command
+def run_builtin_with_pipeline(cmd, input_pipe=None):
+    r, w = os.pipe()
 
-def subprocess_call(command: str)->bool:
-    subprocess.call(command,shell=True)
-    return False
+    stout = sys.stdout
+    stin = sys.stdin
+
+    try:
+        if input_pipe:
+            sys.stdin = input_pipe
+
+        sys.stdout = os.fdeopen(w, "w")
+        builtins[cmd[0]](*cmd[1:])
+
+    finally:
+        sys.stdout.close()
+        sys.stdout = stout
+        sys.stdin = stin
+    return os.fdopen(r)
+
 
 def execute_pipeline(user_input):
-    #logic here
-    cmds =[shlex.split(cmd.strip()) for cmd in user_input.split("|")]
-    processes =[]
+    # logic here
+    cmds = [shlex.split(cmd.strip()) for cmd in user_input.split("|")]
+    processes = []
     prev = None
-    
-    
-    for i,cmd in enumerate(cmds):
-        path = find_executable(cmd[0])
-        if not path:
-            print(f"{cmd[0]}: command not found")
-            return
-        
-        p =subprocess.Popen(
-            cmd,
-            executable=path,
-            stdin = prev,
-            stdout =subprocess.PIPE if i< len(cmds)-1 else None,
-        )
-        
-        if prev :
-            prev.close()
+
+    for i, cmd in enumerate(cmds):
+
+        command = cmd[0]
+        if command in builtins:
+            prev = run_builtin_with_pipeline(cmd, prev)
+
+        else:
+            path = find_executable(command)
+            if not path:
+                print(f"{command}: command not found")
+                return
+
+            p = subprocess.Popen(
+                cmd,
+                executable=path,
+                stdin=prev,
+                stdout=subprocess.PIPE if i < len(cmds) - 1 else None,
+            )
+
+            if prev:
+                prev.close()
+
+            prev = p.stdout
+            processes.append(p)
+
+        for p in processes:
+            p.wait()
             
-        prev =p.stdout
-        processes.append(p)
-        
-    for p in processes:
-        p.wait()
-    
+        if prev:
+            sys.stdout.write(prev.read())
+
+
 builtins = {
     "exit": cmd_exit,
     "echo": cmd_echo,
@@ -220,7 +241,7 @@ def main():
 
         if not user_input.strip():
             continue
-        
+
         if "|" in user_input:
             execute_pipeline(user_input)
             continue
@@ -229,8 +250,6 @@ def main():
         command = parts[0]
         args = parts[1:]
 
-        
-        
         if command in builtins:
             builtins[command](*args)
         else:
