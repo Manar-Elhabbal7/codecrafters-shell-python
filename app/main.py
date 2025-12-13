@@ -252,7 +252,10 @@ def main():
         args = parts[1:]
 
         if command in builtins:
-            builtins[command](*args)
+            result = builtins[command](*args)
+            if result:
+                sys.stdout.write(result)
+
         else:
             path = find_executable(command)
             if path:
