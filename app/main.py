@@ -160,11 +160,12 @@ def handle_redirection(args):
             
     return args, None, None
 
+
+ 
 def main():
     
     readline.set_completer(auto_complete)
     readline.parse_and_bind("tab: complete")
-    
     
     
     running = True
