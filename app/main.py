@@ -244,7 +244,7 @@ def cmd_history(*args):
         try:
             with open(path, "w") as f:
                 for line in range(1, total + 1):
-                    cmd = readline.get_history_item(i)
+                    cmd = readline.get_history_item(line)
                     if cmd:
                         f.write(cmd + "\n")
         except OSError as e:
@@ -257,7 +257,7 @@ def cmd_history(*args):
         try:
             with open(path, "a") as f:
                 for line in range(1, total + 1):
-                    cmd = readline.get_history_item(i)
+                    cmd = readline.get_history_item(line)
                     if cmd:
                         f.write(cmd + "\n")
         except OSError as e:
