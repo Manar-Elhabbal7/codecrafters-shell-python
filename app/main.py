@@ -221,8 +221,11 @@ def execute_pipeline(user_input):
         sys.stdout.write(prev.read())
 
 
-def cmd_history(*args):
+idx = 0
 
+
+def cmd_history(*args):
+    global idx
     total = readline.get_current_history_length()
 
     # for reading history from file
@@ -256,10 +259,11 @@ def cmd_history(*args):
         path = args[1]
         try:
             with open(path, "a") as f:
-                for line in range(1, total + 1):
+                for line in range(idx + 1, total + 1):
                     cmd = readline.get_history_item(line)
                     if cmd:
                         f.write(cmd + "\n")
+                idx = total
         except OSError as e:
             print(f"history: {path}: {e.strerror}")
         return
