@@ -3,6 +3,8 @@ import sys
 import subprocess
 import shlex
 import os
+import atexit
+
 
 """
 *_ for arguments and it will be ignored 
@@ -222,8 +224,35 @@ def execute_pipeline(user_input):
 
 
 idx = 0
+historyFile =  os.getenv("HISTFILE", os.path.expanduser("~/.my_shell_history"))
 
+#load the history
+if os.path.exists(historyFile):
+    try:
+        with open(historyFile,"r") as f:
+            for line in f:
+                line = line.rstrip('\n')
+                if line.strip():
+                    readline.add_history(line)
+    except OSError as e:
+         print(f"Cannot read history file {historyFile}: {e}")
 
+    
+#save history 
+def save_history():
+    total = readline.get_current_history_length()
+    try:
+        with open(historyFile, "w") as f:
+            for i in range(1, total + 1):
+                cmd = readline.get_history_item(i)
+                if cmd:
+                    f.write(cmd + "\n")
+    except OSError as e:
+        print(f"Cannot write history file {historyFile}: {e}")
+
+atexit.register(save_history)
+
+    
 def cmd_history(*args):
     global idx
     total = readline.get_current_history_length()
@@ -343,7 +372,9 @@ def main():
 
         if not user_input.strip():
             continue
-
+        
+        readline.add_history(user_input)
+        
         if "|" in user_input:
             execute_pipeline(user_input)
             continue
