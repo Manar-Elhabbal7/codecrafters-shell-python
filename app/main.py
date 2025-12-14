@@ -294,12 +294,15 @@ def main():
     while running:
         sys.stdout.write("$ ")
         sys.stdout.flush()
-        user_input = input()
+        
+        try:
+            user_input = input()
+        except EOFError:
+            break
 
         if not user_input.strip():
             continue
 
-        readline.add_history(user_input)
 
 
         if "|" in user_input:
