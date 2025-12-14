@@ -292,11 +292,11 @@ def main():
     running = True
 
     while running:
-        sys.stdout.write("$ ")
-        sys.stdout.flush()
+        #sys.stdout.write("$ ")
+        #sys.stdout.flush()
         
         try:
-            user_input = input()
+            user_input = input("$ ")
         except EOFError:
             break
 
