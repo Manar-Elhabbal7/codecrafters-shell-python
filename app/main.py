@@ -70,6 +70,8 @@ def cmd_echo(*args):
 builtin or external program or not found
 
 """
+
+
 def cmd_type(command):
     if command in builtins:
         print(f"{command} is a shell builtin")
@@ -86,6 +88,8 @@ getcwd to get current working directory
 os is a library to excute with the operating system
 
 """
+
+
 def cmd_pwd(*_):
     print(os.getcwd())
 
@@ -98,6 +102,8 @@ chdir to change dir to the new path
 i handled if the file not found
 
 """
+
+
 def cmd_cd(directory):
     new_path = os.path.normpath(os.path.join(os.getcwd(), directory))
 
@@ -215,25 +221,50 @@ def execute_pipeline(user_input):
         sys.stdout.write(prev.read())
 
 
-
 def cmd_history(*args):
+
+    total = readline.get_current_history_length()
+
     # for reading history from file
-    
-    if len(args) == 2 and args[0] =="-r":
-        path =args[1]
+    if len(args) == 2 and args[0] == "-r":
+        path = args[1]
         try:
-            with open(path,"r") as f:
+            with open(path, "r") as f:
                 for line in f:
-                    line =line.rstrip('\n')
+                    line = line.rstrip("\n")
                     if line.strip():
                         readline.add_history(line)
         except FileNotFoundError:
-             print(f"history: {path}: No such file or directory")
+            print(f"history: {path}: No such file or directory")
         return
-    
-    #if user write history or history N
-    total = readline.get_current_history_length()
 
+    # for writing to the history file
+    if len(args) == 2 and args[0] == "-w":
+        path = args[1]
+        try:
+            with open(path, "w") as f:
+                for line in range(1, total + 1):
+                    cmd = readline.get_history_item(i)
+                    if cmd:
+                        f.write(cmd + "\n")
+        except OSError as e:
+            print(f"history: {path}: {e.strerror}")
+        return
+
+    # append to the file
+    if len(args) == 2 and args[0] == "-a":
+        path = args[1]
+        try:
+            with open(path, "a") as f:
+                for line in range(1, total + 1):
+                    cmd = readline.get_history_item(i)
+                    if cmd:
+                        f.write(cmd + "\n")
+        except OSError as e:
+            print(f"history: {path}: {e.strerror}")
+        return
+
+    # for cmd history and history n
     if args and args[0].isdigit():
         limit = int(args[0])
         start = max(1, total - limit + 1)
@@ -262,6 +293,8 @@ paths = path.split(os.pathsep)
 """
 command is the name we search about 
 """
+
+
 def find_executable(command):
     for path in paths:
         full_path = os.path.join(path, command)
@@ -294,11 +327,11 @@ def handle_redirection(args):
 def main():
     readline.set_completer(auto_complete)
     readline.parse_and_bind("tab: complete")
-    
+
     running = True
 
     while running:
-        
+
         try:
             user_input = input("$ ")
         except EOFError:
@@ -306,8 +339,6 @@ def main():
 
         if not user_input.strip():
             continue
-
-
 
         if "|" in user_input:
             execute_pipeline(user_input)
