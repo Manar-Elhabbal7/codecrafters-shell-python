@@ -373,7 +373,6 @@ def main():
         if not user_input.strip():
             continue
         
-        readline.add_history(user_input)
         
         if "|" in user_input:
             execute_pipeline(user_input)
