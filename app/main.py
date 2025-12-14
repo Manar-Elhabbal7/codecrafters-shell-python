@@ -221,22 +221,18 @@ def execute_pipeline(user_input):
         sys.stdout.write(prev.read())
 
 
-history_list = []
-
-
-def addTohistory(command):
-    history_list.append(command)
-
 
 def cmd_history(*args):
+    total = readline.get_current_history_length()
+
     if args and args[0].isdigit():
         limit = int(args[0])
-
+        start = max(1, total - limit + 1)
     else:
-        limit = len(history_list)
+        start = 1
 
-    for i, cmd in enumerate(history_list[-limit:], start=len(history_list) - limit + 1):
-        print(f"{i} {cmd}")
+    for i in range(start, total + 1):
+        print(f"{i} {readline.get_history_item(i)}")
 
 
 builtins = {
@@ -292,7 +288,7 @@ def main():
 
     readline.set_completer(auto_complete)
     readline.parse_and_bind("tab: complete")
-
+    
     running = True
 
     while running:
@@ -303,7 +299,8 @@ def main():
         if not user_input.strip():
             continue
 
-        addTohistory(user_input)
+        readline.add_history(user_input)
+
 
         if "|" in user_input:
             execute_pipeline(user_input)
